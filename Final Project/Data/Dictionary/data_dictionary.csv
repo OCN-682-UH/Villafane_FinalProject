@@ -1,0 +1,7 @@
+,,
+Name,Plot_Name,Description
+Lat,Latitude,Description of the sampling location latitude coordinates
+Long,Longitud,Description of the sampling location longitude coordinates
+Salinity_ppt,Salinity (PPT),The salinity of the groundwater measured in parts per thousand (ppt).
+Temperature..C.,Temperature ( °C),The temperature of the groundwater measured in degrees Celsius (°C).
+Date.time,Date.time,The time when the mesurment or sample was taken.

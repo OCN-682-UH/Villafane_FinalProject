@@ -1,0 +1,155 @@
+---
+title: "Final Project"
+author: "Jobel Y. Villafane Pagan"
+date: "2024-12-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,  
+                      fig.path = "../Output/")
+```
+
+# Introduction
+The code is to create and present one final independent project and presented. The goal of the independent project is to tell a story with my Heʻeia Fishpond, Oahu Island (HI)" data. Fishpond were a important and vital feature for the ancient Hawaiian culture for aquaculture.
+
+For centuries, Native Hawaiians developed marine aquaculture using freshwater from streams and submarine groundwater discharge (SGD) in managed estuaries called loko i‘a (fishponds). He‘eia Fishpond, was built 600-800 years ago, encloses 88 acres of brackish water on the Windward Coast of O‘ahu (Möhlenkamp et al,2018). Based on the salinity data measured by Dr. Dulai,registered fresher groundwater input compared to the fishpond salinities; this can be interpret as submarine groundwater discharg entering the pond. 
+
+SGD is a hydrogeological coastal process which involves fresh groundwater, re-circulated seawater, or combination of both.Connecting the land and ocean and its effects; directly impacting coastal water quality, nutrient supply, temperature and salinity regulation. 
+
+![Fig. 1: Heʻeia Fishpond](https://d1l18ops95qbzp.cloudfront.net/wp-content/2018/10/17092001/Heeia-Fishpond-Kaneohe-Bay-aerial1.jpg)
+
+
+# Libraries
+```{r}
+library(ggmap)
+library(tidyverse)
+library(here)
+library(ggspatial)
+library(tidyr)
+library(ggplot2)
+library(gganimate)
+library(lubridate)
+
+
+```
+
+# Data 
+```{r}
+Heeia_fishpond<-read.csv(here("Final Project", "Data", "Dulai_sgd.csv"))
+
+glimpse(Heeia_fishpond)
+
+
+```
+
+# Cleaning the data
+```{r}
+# Rename GPS.Lat to Lat
+Heeia_fishpond <- Heeia_fishpond %>%
+  rename_with(~ str_replace_all(., "GPS.Lat", "Lat"))
+
+# Drop rows with any NA values
+Heeia_fishpond <- Heeia_fishpond %>%
+  drop_na()
+
+view(Heeia_fishpond) # Verify the new column name
+glimpse(Heeia_fishpond)
+
+```
+
+
+
+# Plot 1
+```{r}
+
+##Create map##
+Oahu<-get_map("Oahu")
+ggmap(Oahu)
+
+Heeia<-data.frame(lon = -157.807755, lat = 21.436261) # coordinates for Heeia
+
+Map1<-get_map(Heeia, zoom = 17, maptype = "satellite")
+ggmap(Map1) +
+  geom_point(data = Heeia_fishpond, 
+             aes (x = Long, y = Lat, color = Salinity),
+             size = 2) +
+  annotation_scale( bar_cols = c("black", "white"),
+                    location = "bl")+ # put the bar on the bottom left and make the colors black and white
+  annotation_north_arrow(location = "tr")+ # add a north arrow
+  coord_sf(crs = 4326)
+
+```
+
+
+
+# Plot 2
+```{r}
+# Coordinates for Heeia
+Heeia <- data.frame(lon = -157.807755, lat = 21.436261)  # coordinates for Heeia
+
+# Map centered on Heeia
+Map1 <- get_map(location = c(lon = Heeia$lon, lat = Heeia$lat), zoom = 17, maptype = "satellite")
+
+# Create the frame variable (e.g., index of rows)
+Heeia_fishpond$frame <- 1:nrow(Heeia_fishpond)  # Make sure the frame variable exists
+
+# Create the animated map
+animated_map <- ggmap(Map1) +
+  geom_point(data = Heeia_fishpond, 
+             aes(x = Long, y = Lat, color = Salinity), 
+             size = 5) +
+  annotation_scale(bar_cols = c("black", "white"), location = "bl") +    # Adding scale bar
+  annotation_north_arrow(location = "tr") +           # Adding north arrow
+  coord_sf(crs = 4326) +
+  labs(title = "Heʻeia Fishpond, Oahu Island (HI)") +   #title
+  transition_manual(frame) +  # Animate points by 'frame' variable
+  ease_aes('linear') + # Smooth animation
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"))  # Center and bold the title
+
+# Render the animated map
+animate(animated_map, nframes = nrow(Heeia_fishpond), duration = 15, fps = 5)
+
+```
+
+#Plot 3
+
+```{r}
+# Scatter plot of Salinity vs Temperature
+ggplot(Heeia_fishpond, aes(x = Salinity, y = Temperature..C.)) +
+  geom_point(color = "orange", size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "red", linetype = "dashed", size = 1) + # Add trend line
+  labs(
+    title = "Heʻeia Fishpond, Oahu Island (HI)",
+    x = "Salinity (ppt)",
+    y = "Temperature (°C)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 13),
+    panel.background = element_rect(fill = "#EAF6FF", color = NA), # Light blue for plot area
+    plot.background = element_rect(fill = "#F5F5F5", color = NA)  # Light gray for entire plot
+  )
+```
+
+# Plot 4
+```{r}
+# Boxplot of Salinity across different Temperature ranges
+ggplot(Heeia_fishpond, aes(x = cut(Temperature..C., breaks = 5), y = Salinity)) +
+  geom_boxplot(fill = "orange", alpha = 0.7) +
+  labs(
+    title = "Heʻeia Fishpond Salinity Distribution Across Temperature Ranges",
+    x = "Temperature Range (°C)",
+    y = "Salinity (ppt)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 13),
+    panel.background = element_rect(fill = "#EAF6FF", color = NA), # Light blue for plot area
+    plot.background = element_rect(fill = "#F5F5F5", color = NA)  # Light gray for entire plot
+  )
+```
